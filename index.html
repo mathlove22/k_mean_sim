@@ -18,10 +18,11 @@
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin-bottom: 1.5rem;
-            width: 100%;
+            max-width: 100%;
             height: auto;
-            max-height: 500px;
-            aspect-ratio: 8 / 6;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
         .controls-container {
             display: flex;
@@ -29,6 +30,9 @@
             justify-content: center;
             gap: 1rem;
             margin-bottom: 1.5rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .control-item {
             display: flex;
@@ -78,6 +82,9 @@
             border: 1px solid #16a34a;
             font-weight: 500;
             text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .hidden {
             display: none;
@@ -200,9 +207,28 @@
         }
         
         function resizeCanvas() {
-            const containerWidth = Math.min(document.querySelector('.controls-container').offsetWidth, 800);
-            canvas.width = containerWidth;
-            canvas.height = containerWidth * 0.75;
+            // 컨테이너 너비에 맞춰 캔버스 크기 설정 (최대 800px)
+            const maxWidth = Math.min(window.innerWidth - 40, 800);
+            const canvasWidth = maxWidth;
+            const canvasHeight = Math.floor(canvasWidth * 0.75); // 4:3 비율
+            
+            // 실제 캔버스 크기 설정
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // CSS 크기도 동일하게 설정하여 왜곡 방지
+            canvas.style.width = canvasWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
+            
+            // 고해상도 디스플레이 대응
+            const dpr = window.devicePixelRatio || 1;
+            if (dpr > 1) {
+                canvas.width = canvasWidth * dpr;
+                canvas.height = canvasHeight * dpr;
+                canvas.style.width = canvasWidth + 'px';
+                canvas.style.height = canvasHeight + 'px';
+                ctx.scale(dpr, dpr);
+            }
         }
         
         resizeCanvas();
@@ -219,9 +245,9 @@
         let previousCentroids = [];
         
         function generateDataPoints(numPoints) {
-            const width = canvas.width;
-            const height = canvas.height;
-            const padding = 50;
+            const width = canvas.style.width ? parseFloat(canvas.style.width) : canvas.width;
+            const height = canvas.style.height ? parseFloat(canvas.style.height) : canvas.height;
+            const padding = 40;
             dataPoints = [];
             for (let i = 0; i < numPoints; i++) {
                 const x = padding + Math.random() * (width - 2 * padding);
@@ -234,9 +260,9 @@
         function initializeCentroids(method, dataPoints, numClusters) {
             centroids = [];
             if (method === 'random') {
-                const width = canvas.width;
-                const height = canvas.height;
-                const padding = 50;
+                const width = canvas.style.width ? parseFloat(canvas.style.width) : canvas.width;
+                const height = canvas.style.height ? parseFloat(canvas.style.height) : canvas.height;
+                const padding = 40;
                 
                 for (let i = 0; i < numClusters; i++) {
                     const x = padding + Math.random() * (width - 2 * padding);
@@ -320,7 +346,7 @@
         function drawDataPoints(dataPoints, pointColor, clusterColors) {
             for (const point of dataPoints) {
                 ctx.beginPath();
-                ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI); // 크기를 8에서 5로 줄임
                 ctx.fillStyle = point.cluster === -1 ? pointColor : clusterColors[point.cluster % clusterColors.length];
                 ctx.fill();
                 ctx.closePath();
@@ -330,7 +356,7 @@
         function drawCentroids(centroids, clusterColors, step) {
             for (let i = 0; i < centroids.length; i++) {
                 ctx.beginPath();
-                ctx.arc(centroids[i].x, centroids[i].y, 12, 0, 2 * Math.PI);
+                ctx.arc(centroids[i].x, centroids[i].y, 8, 0, 2 * Math.PI); // 크기를 12에서 8로 줄임
                 ctx.fillStyle = clusterColors[i % clusterColors.length];
                 ctx.fill();
                 ctx.strokeStyle = '#333';
@@ -355,7 +381,9 @@
         }
         
         function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const width = canvas.style.width ? parseFloat(canvas.style.width) : canvas.width;
+            const height = canvas.style.height ? parseFloat(canvas.style.height) : canvas.height;
+            ctx.clearRect(0, 0, width, height);
         }
         
         function kMeansStep(dataPoints, centroids, numClusters, pointColor, clusterColors, step) {
