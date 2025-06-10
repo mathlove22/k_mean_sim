@@ -220,7 +220,7 @@
             canvas.style.width = canvasLogicalWidth + 'px';
             canvas.style.height = canvasLogicalHeight + 'px';
             
-            // 실제 캔버스 크기는 논리적 크기와 동일하게 설정 (DPR 적용하지 않음)
+            // 실제 캔버스 크기는 논리적 크기와 동일하게 설정
             canvas.width = canvasLogicalWidth;
             canvas.height = canvasLogicalHeight;
         }
@@ -389,26 +389,29 @@
         }
         
         function kMeansStep(dataPoints, centroids, numClusters, pointColor, clusterColors, step) {
-            clearCanvas();
-            drawDataPoints(dataPoints, pointColor, clusterColors);
-            drawCentroids(centroids, clusterColors, step);
-            
             if (step === 0) {
+                // 단계 0: 중심점 초기화
                 centroids = initializeCentroids(initializationMethodSelect.value, dataPoints, numClusters);
-                drawCentroids(centroids, clusterColors, step);
-                step = 1;
-                previousCentroids = [...centroids];
-                return { dataPoints, centroids, step };
-            } else if (step === 1) {
-                if (centroids.length > 0) {
-                    dataPoints = assignDataPointsToClusters(dataPoints, centroids);
-                    drawLines(dataPoints, centroids, clusterColors);
-                }
+                clearCanvas();
                 drawDataPoints(dataPoints, pointColor, clusterColors);
                 drawCentroids(centroids, clusterColors, step);
+                showMessage('중심점을 초기화했습니다.');
+                step = 1;
+                return { dataPoints, centroids, step };
+            } else if (step === 1) {
+                // 단계 1: 클러스터 할당
+                if (centroids.length > 0) {
+                    dataPoints = assignDataPointsToClusters(dataPoints, centroids);
+                }
+                clearCanvas();
+                drawDataPoints(dataPoints, pointColor, clusterColors);
+                drawCentroids(centroids, clusterColors, step);
+                drawLines(dataPoints, centroids, clusterColors);
+                showMessage('데이터 포인트를 클러스터에 할당했습니다.');
                 step = 2;
                 return { dataPoints, centroids, step };
             } else if (step === 2) {
+                // 단계 2: 중심점 업데이트
                 if (centroids.length > 0) {
                     const newCentroids = updateCentroids(centroids, dataPoints, numClusters);
                     
@@ -422,6 +425,9 @@
                     }
                     
                     if (converged) {
+                        clearCanvas();
+                        drawDataPoints(dataPoints, pointColor, clusterColors);
+                        drawCentroids(newCentroids, clusterColors, step);
                         showMessage(`k-평균 알고리즘이 수렴하였습니다.`);
                         step = 3;
                         return { dataPoints, centroids: newCentroids, step };
@@ -429,14 +435,17 @@
                     
                     centroids = newCentroids;
                 }
+                clearCanvas();
                 drawDataPoints(dataPoints, pointColor, clusterColors);
                 drawCentroids(centroids, clusterColors, step);
-                step = 1;
-                previousCentroids = [...centroids];
+                showMessage('중심점을 업데이트했습니다.');
+                step = 1; // 다시 클러스터 할당 단계로
                 return { dataPoints, centroids, step };
             } else if (step === 3) {
-                drawDataPoints(dataPoints, pointColor, clusterColors);
-                drawCentroids(centroids, clusterColors, step);
+                // 단계 3: 완료 상태
+                clearInterval(animationInterval);
+                runButton.textContent = "실행";
+                isRunning = false;
                 return { dataPoints, centroids, step };
             }
             return { dataPoints, centroids, step };
@@ -460,17 +469,28 @@
                 return;
             }
             
-            dataPoints = generateDataPoints(numPoints);
-            centroids = initializeCentroids(initializationMethodSelect.value, dataPoints, numClusters);
+            // ▼▼▼ 이 라인을 삭제했습니다! ▼▼▼
+            // dataPoints = generateDataPoints(numPoints);
+            // ▲▲▲ 이 라인을 삭제했습니다! ▲▲▲
+            
+            centroids = [];
             step = 0;
             const animationSpeed = parseInt(animationSpeedInput.value);
+            
+            // 첫 번째 단계 즉시 실행
+            let result = kMeansStep(dataPoints, centroids, numClusters, pointColor, clusterColors, step);
+            dataPoints = result.dataPoints;
+            centroids = result.centroids;
+            step = result.step;
+            
+            // 나머지 단계들을 타이머로 실행
             animationInterval = setInterval(() => {
                 let result = kMeansStep(dataPoints, centroids, numClusters, pointColor, clusterColors, step);
                 dataPoints = result.dataPoints;
                 centroids = result.centroids;
                 step = result.step;
                 
-                if (step === 0) {
+                if (step === 3) {
                     clearInterval(animationInterval);
                     runButton.textContent = "실행";
                     isRunning = false;
@@ -501,6 +521,7 @@
             showMessage('시뮬레이션을 초기화했습니다. "실행"을 눌러 알고리즘을 시작하세요.');
         }
         
+        // 초기 설정
         const initialNumPoints = parseInt(dataPointsInput.value);
         numClusters = parseInt(numClustersInput.value);
         pointColor = pointColorInput.value;
