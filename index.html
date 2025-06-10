@@ -93,6 +93,9 @@
         .bg-green-100 { background-color: #f0fdf4; }
         .text-green-700 { color: #15803d; }
         .border-green-500 { border-color: #16a34a; }
+        .bg-red-100 { background-color: #fef2f2; }
+        .text-red-700 { color: #b91c1c; }
+        .border-red-500 { border-color: #ef4444; }
         .rounded-md { border-radius: 0.375rem; }
         .p-4 { padding: 1rem; }
         .mt-6 { margin-top: 1.5rem; }
@@ -173,7 +176,7 @@
             <input type="number" id="animation-speed" value="1000" min="100" max="5000">
         </div>
         <div class="control-item">
-            <button id="reset-button" class="bg-gray-100 hover:bg-gray-50 text-gray-700 font-semibold rounded-md py-2 px-4 shadow-sm transition-colors duration-150">초기화</button>
+            <button id="reset-button" class="bg-gray-100 hover:bg-gray-50 text-gray-700 font-semibold rounded-md py-2 px-4 shadow-sm transition-colors duration-150">데이터 생성</button>
         </div>
         <div class="control-item">
             <button id="run-button" class="bg-blue-500 hover:bg-blue-700 text-white font-semibold rounded-md py-2 px-4 shadow-sm transition-colors duration-150">실행</button>
@@ -459,19 +462,21 @@
                 return;
             }
             
+            // 데이터 포인트가 없으면 실행할 수 없음
+            if (dataPoints.length === 0) {
+                showMessage('먼저 "데이터 생성" 버튼을 눌러 데이터 포인트를 생성해주세요.', 'error');
+                return;
+            }
+            
             numClusters = parseInt(numClustersInput.value);
             const numPoints = parseInt(dataPointsInput.value);
             pointColor = pointColorInput.value;
             clusterColors = clusterColorInputs.map(input => input.value);
             
-            if (numClusters > numPoints) {
+            if (numClusters > dataPoints.length) {
                 showMessage('클러스터 수는 데이터 포인트 수보다 작거나 같아야 합니다.', 'error');
                 return;
             }
-            
-            // ▼▼▼ 이 라인을 삭제했습니다! ▼▼▼
-            // dataPoints = generateDataPoints(numPoints);
-            // ▲▲▲ 이 라인을 삭제했습니다! ▲▲▲
             
             centroids = [];
             step = 0;
@@ -518,17 +523,14 @@
             dataPoints = generateDataPoints(numPoints);
             drawDataPoints(dataPoints, pointColor, []);
             
-            showMessage('시뮬레이션을 초기화했습니다. "실행"을 눌러 알고리즘을 시작하세요.');
+            showMessage('새로운 데이터 포인트를 생성했습니다. "실행" 버튼을 눌러 알고리즘을 시작하세요.');
         }
         
-        // 초기 설정
-        const initialNumPoints = parseInt(dataPointsInput.value);
-        numClusters = parseInt(numClustersInput.value);
-        pointColor = pointColorInput.value;
-        clusterColors = clusterColorInputs.map(input => input.value);
-        
-        dataPoints = generateDataPoints(initialNumPoints);
-        drawDataPoints(dataPoints, pointColor, []);
+        // ▼▼▼ 최초 점 생성 코드 제거 ▼▼▼
+        // 페이지 로드 시에는 빈 캔버스만 표시
+        clearCanvas();
+        showMessage('먼저 "데이터 생성" 버튼을 눌러 데이터 포인트를 생성해주세요.');
+        // ▲▲▲ 최초 점 생성 코드 제거 ▲▲▲
         
         runButton.addEventListener('click', runSimulation);
         resetButton.addEventListener('click', resetSimulation);
